@@ -21,7 +21,7 @@ export function useTasks() {
       notes: taskData.notes || '',
       details: taskData.details || '',
       startTime: taskData.startTime || null,
-      duration: taskData.duration || 30,
+      duration: taskData.duration || 60,
       category: taskData.category || null,
       titleColor: taskData.titleColor || null,
       isDone: taskData.isDone || false,

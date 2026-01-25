@@ -3,12 +3,12 @@ import { getAutoColor } from '../utils/colors';
 import { getColorOptions } from '../utils/colors';
 
 const DURATION_OPTIONS = [
-  { value: 30, label: '30 min' },
   { value: 60, label: '1 hr' },
-  { value: 90, label: '1.5 hr' },
   { value: 120, label: '2 hr' },
   { value: 180, label: '3 hr' },
   { value: 240, label: '4 hr' },
+  { value: 300, label: '5 hr' },
+  { value: 360, label: '6 hr' },
 ];
 
 const CATEGORY_OPTIONS = [
@@ -28,7 +28,7 @@ function TaskModal({ taskId, initialStartTime, onClose, onSave, onDelete, getTas
     notes: task?.notes || '',
     details: task?.details || '',
     startTime: initialStartTime || task?.startTime || '',
-    duration: task?.duration || 30,
+    duration: task?.duration || 60,
     category: task?.category || '',
     titleColor: task?.titleColor || '',
     isDone: task?.isDone || false,
@@ -77,29 +77,6 @@ function TaskModal({ taskId, initialStartTime, onClose, onSave, onDelete, getTas
     setFormData(prev => ({ ...prev, titleColor: autoColor }));
   }, [formData.isDone, formData.category]);
 
-  // Handle outside click and Escape key
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
-        handleSave(formDataRef.current);
-      }
-    };
-
-    const handleEscape = (event) => {
-      if (event.key === 'Escape') {
-        handleSave(formDataRef.current);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleEscape);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, []);
-
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -128,6 +105,35 @@ function TaskModal({ taskId, initialStartTime, onClose, onSave, onDelete, getTas
     onClose();
   };
 
+  // Keep cancel handler ref in sync
+  const handleCancelRef = useRef(handleCancel);
+  useEffect(() => {
+    handleCancelRef.current = handleCancel;
+  }, [initialData, onClose]);
+
+  // Handle outside click and Escape key
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        handleSave(formDataRef.current);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        handleCancelRef.current();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []); // Empty deps - using refs for handlers
+
   const handleDelete = () => {
     if (taskId) {
       onDelete(taskId);
@@ -141,25 +147,66 @@ function TaskModal({ taskId, initialStartTime, onClose, onSave, onDelete, getTas
 
   const colorOptions = getColorOptions();
 
-  // Format startTime for input type="datetime-local"
-  const formatDateTimeLocal = (isoString) => {
-    if (!isoString) return '';
+  // Parse date and hour from ISO string
+  const getDateAndHour = (isoString) => {
+    if (!isoString) return { date: '', hour: '' };
     const date = new Date(isoString);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    return {
+      date: `${year}-${month}-${day}`,
+      hour: String(date.getHours()).padStart(2, '0')
+    };
   };
 
-  const handleDateTimeChange = (e) => {
-    const value = e.target.value;
-    if (value) {
-      const date = new Date(value);
+  // Generate hour options (6:00 to 23:00)
+  const hourOptions = [];
+  for (let i = 6; i < 24; i++) {
+    hourOptions.push(String(i).padStart(2, '0'));
+  }
+
+  const { date: selectedDate, hour: selectedHour } = getDateAndHour(formData.startTime);
+
+  const handleDateChange = (e) => {
+    const dateValue = e.target.value;
+    if (!dateValue) {
+      // Clear startTime if date is cleared
+      handleChange('startTime', '');
+      return;
+    }
+    
+    if (selectedHour) {
+      // Combine date and hour into ISO string
+      const date = new Date(`${dateValue}T${selectedHour}:00:00`);
       handleChange('startTime', date.toISOString());
     } else {
+      // If only date is set, use default hour of 9:00
+      const date = new Date(`${dateValue}T09:00:00`);
+      handleChange('startTime', date.toISOString());
+    }
+  };
+
+  const handleHourChange = (e) => {
+    const hourValue = e.target.value;
+    if (!hourValue) {
+      // Clear startTime if hour is cleared
       handleChange('startTime', '');
+      return;
+    }
+    
+    if (selectedDate) {
+      // Combine date and hour into ISO string
+      const date = new Date(`${selectedDate}T${hourValue}:00:00`);
+      handleChange('startTime', date.toISOString());
+    } else {
+      // If only hour is set, use today's date
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const date = new Date(`${year}-${month}-${day}T${hourValue}:00:00`);
+      handleChange('startTime', date.toISOString());
     }
   };
 
@@ -186,11 +233,24 @@ function TaskModal({ taskId, initialStartTime, onClose, onSave, onDelete, getTas
         <div className="modal-body">
           <div className="modal-field">
             <label>Start Time (optional - leave empty for sidebar)</label>
-            <input
-              type="datetime-local"
-              value={formatDateTimeLocal(formData.startTime)}
-              onChange={handleDateTimeChange}
-            />
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={handleDateChange}
+                style={{ width: '140px' }}
+              />
+              <select
+                value={selectedHour}
+                onChange={handleHourChange}
+                style={{ width: '120px' }}
+              >
+                <option value="">--</option>
+                {hourOptions.map(hour => (
+                  <option key={hour} value={hour}>{hour}:00</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="modal-field">
