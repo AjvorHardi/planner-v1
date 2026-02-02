@@ -69,21 +69,20 @@
 
 .planner-grid {
   display: grid;
-  gap: 1px;
-  background-color: #e5e7eb;
-  border: 1px solid #e5e7eb;
+  gap: 0;
+  background-color: #ffffff;
   width: 100%;
   height: 100%;
 }
 
 .time-label-header {
-  background-color: #f9fafb;
-  border-right: 1px solid #d1d5db;
+  background-color: #ffffff;
   padding: 8px;
   font-weight: 500;
   position: sticky;
   top: 0;
   z-index: 10;
+  border-bottom: 3px solid #d1d5db;
 }
 
 .time-label {
@@ -91,25 +90,23 @@
   padding: 4px 8px;
   font-size: 12px;
   color: #6b7280;
-  border-right: 1px solid #e5e7eb;
   display: flex;
   align-items: center;
 }
 
 .day-header {
-  background-color: #f9fafb;
+  background-color: #ffffff;
   padding: 12px;
   text-align: center;
   font-weight: 500;
-  border-bottom: 2px solid #e5e7eb;
   position: sticky;
   top: 0;
   z-index: 10;
+  border-bottom: 3px solid #d1d5db;
 }
 
 .day-header.today {
   background-color: #eff6ff;
-  border-bottom-color: #3b82f6;
   color: #1e40af;
 }
 
@@ -119,7 +116,6 @@
   min-height: 40px;
   position: relative;
   cursor: pointer;
-  border-bottom: 1px solid #f3f4f6;
   transition: background-color 0.15s;
 }
 
@@ -135,6 +131,7 @@
 .task-card {
   border-radius: 4px;
   overflow: hidden;
+  border: 1px solid #d1d5db;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin: 2px;
   cursor: pointer;

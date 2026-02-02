@@ -31,6 +31,13 @@ export function formatWeekRange(start, end) {
   }
 }
 
+// Format date as "2-feb" for day column headers
+export function formatDayDate(date) {
+  const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const d = new Date(date);
+  return `${d.getDate()}-${months[d.getMonth()]}`;
+}
+
 // Get array of time slots from 6:00 to 23:00 in 30-minute intervals
 export function getTimeSlots() {
   const slots = [];

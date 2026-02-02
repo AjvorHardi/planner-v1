@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { getTimeSlots, getDayOfWeek, getSlotIndex, getSlotHeight, isToday, getWeekStartISO } from '../utils/dateUtils';
+import { getTimeSlots, getDayOfWeek, getSlotIndex, getSlotHeight, getWeekRange, getWeekStartISO, formatDayDate } from '../utils/dateUtils';
 import TaskCard from './TaskCard';
 
 function WeeklyPlanner({ tasks, selectedWeek, onTimeSlotClick, onTaskDoubleClick, onTaskUpdate }) {
@@ -72,6 +72,8 @@ function WeeklyPlanner({ tasks, selectedWeek, onTimeSlotClick, onTaskDoubleClick
   const todayWeekStart = getWeekStartISO(today);
   const todayDayIndex = todayWeekStart === weekStartISO ? getDayOfWeek(today) : -1;
 
+  const monday = getWeekRange(selectedWeek).start;
+
   return (
     <div className="weekly-planner">
       <div className="planner-grid" style={{
@@ -85,15 +87,19 @@ function WeeklyPlanner({ tasks, selectedWeek, onTimeSlotClick, onTaskDoubleClick
         ></div>
 
         {/* Day headers - Row 1, Cols 2-8 */}
-        {days.map((day, dayIndex) => (
-          <div
-            key={`header-${dayIndex}`}
-            className={`day-header ${todayDayIndex === dayIndex ? 'today' : ''}`}
-            style={{ gridRow: 1, gridColumn: dayIndex + 2 }}
-          >
-            {day}
-          </div>
-        ))}
+        {days.map((day, dayIndex) => {
+          const dayDate = new Date(monday);
+          dayDate.setDate(monday.getDate() + dayIndex);
+          return (
+            <div
+              key={`header-${dayIndex}`}
+              className={`day-header ${todayDayIndex === dayIndex ? 'today' : ''}`}
+              style={{ gridRow: 1, gridColumn: dayIndex + 2 }}
+            >
+              {day} ({formatDayDate(dayDate)})
+            </div>
+          );
+        })}
 
         {/* Time labels - Starting Row 2, Col 1 */}
         {timeSlots.map((time, index) => (
